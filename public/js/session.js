@@ -28,6 +28,9 @@ const phaseAdding = document.getElementById('phase-adding');
 const phaseVoting = document.getElementById('phase-voting');
 const phaseResults = document.getElementById('phase-results');
 
+const scoringConfig = document.getElementById('scoring-config');
+const scoringAddingDisplay = document.getElementById('scoring-adding-display');
+const scoringDisplay = document.getElementById('scoring-display');
 const addItemForm = document.getElementById('add-item-form');
 const itemInput = document.getElementById('item-input');
 const itemError = document.getElementById('item-error');
@@ -170,6 +173,7 @@ function handleMessage(msg) {
         state.doneParticipants = [];
         renderParticipants();
         renderPhase();
+        renderScoringRules();
         renderDoneButton();
         refreshReadyCount();
       }
@@ -185,6 +189,13 @@ function handleMessage(msg) {
         renderParticipants();
         renderDoneButton();
         renderReadyCount(msg.doneCount, msg.totalConnected);
+      }
+      break;
+    }
+    case 'scoring-updated': {
+      if (state) {
+        state.scoringRules = msg.scoringRules;
+        renderScoringRules();
       }
       break;
     }
@@ -228,10 +239,64 @@ function renderAll() {
   renderParticipants();
   renderPhase();
   renderItems();
+  renderScoringRules();
   renderDoneButton();
   const connected = Object.values(state.participants).filter(p => p.connected).length;
   const doneCount = state.doneParticipants.filter(id => state.participants[id]?.connected).length;
   renderReadyCount(doneCount, connected);
+}
+
+function renderScoringRules() {
+  if (!state) return;
+  const { favor, neutral, against } = state.scoringRules;
+  const isCreator = myParticipantId === state.creatorId;
+  const canEdit = isCreator && state.phase === 'adding';
+
+  const fmt = v => (v > 0 ? '+' : '') + v;
+
+  const readonlyHtml = `
+    <div class="scoring-label">Scoring:</div>
+    <span class="vote-count favor">In Favor: ${fmt(favor)}</span>
+    <span class="vote-count neutral">Neutral: ${fmt(neutral)}</span>
+    <span class="vote-count against">Against: ${fmt(against)}</span>`;
+
+  scoringDisplay.innerHTML = readonlyHtml;
+
+  scoringAddingDisplay.innerHTML = readonlyHtml;
+  scoringAddingDisplay.classList.toggle('hidden', canEdit);
+
+  if (canEdit) {
+    scoringConfig.classList.remove('hidden');
+    scoringConfig.innerHTML = `
+      <h2>Scoring</h2>
+      <div class="scoring-inputs">
+        <div class="form-group">
+          <label for="score-favor">In Favor</label>
+          <input type="number" id="score-favor" class="scoring-input favor" value="${favor}">
+        </div>
+        <div class="form-group">
+          <label for="score-neutral">Neutral</label>
+          <input type="number" id="score-neutral" class="scoring-input neutral" value="${neutral}">
+        </div>
+        <div class="form-group">
+          <label for="score-against">Against</label>
+          <input type="number" id="score-against" class="scoring-input against" value="${against}">
+        </div>
+      </div>`;
+    ['favor', 'neutral', 'against'].forEach(key => {
+      document.getElementById(`score-${key}`).addEventListener('change', sendScoringUpdate);
+    });
+  } else {
+    scoringConfig.classList.add('hidden');
+  }
+}
+
+function sendScoringUpdate() {
+  const favor = parseInt(document.getElementById('score-favor').value, 10);
+  const neutral = parseInt(document.getElementById('score-neutral').value, 10);
+  const against = parseInt(document.getElementById('score-against').value, 10);
+  if ([favor, neutral, against].some(isNaN)) return;
+  ws.send(JSON.stringify({ type: 'set-scoring', favor, neutral, against }));
 }
 
 function renderDoneButton() {

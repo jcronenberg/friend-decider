@@ -1,7 +1,7 @@
-// score = (favor * 2) + (neutral * 0) + (against * -5)
 // Un-voted participants count as "in favor" at scoring time
 
 export function rankItems(session) {
+  const { favor: favorPts, neutral: neutralPts, against: againstPts } = session.scoringRules;
   const totalParticipants = session.participants.size;
 
   const scored = [...session.items.values()].map(item => {
@@ -16,7 +16,7 @@ export function rankItems(session) {
       else favor++; // 'favor' or unvoted both count as favor
     }
 
-    const score = favor * 2 + neutral * 0 + against * -5;
+    const score = favor * favorPts + neutral * neutralPts + against * againstPts;
 
     return {
       id: item.id,

@@ -266,6 +266,58 @@ input:focus { border-color: var(--color-primary); }
   margin-bottom: 12px;
 }
 
+/* Scoring rules (read-only display) */
+.scoring-rules {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.scoring-label {
+  color: var(--color-text-muted);
+  margin-right: 2px;
+}
+
+/* Scoring config card (creator edit) */
+.scoring-config-card {
+  margin-bottom: 16px;
+}
+
+.scoring-inputs {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scoring-inputs .form-group {
+  flex: 1;
+  min-width: 80px;
+  margin-bottom: 0;
+}
+
+.scoring-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  text-align: center;
+}
+.scoring-input:focus { outline: none; }
+.scoring-input.favor { border-color: var(--color-favor); }
+.scoring-input.neutral { border-color: var(--color-neutral); }
+.scoring-input.against { border-color: var(--color-against); }
+
+.scoring-inputs .form-group:has(.favor) label { color: var(--color-favor); }
+.scoring-inputs .form-group:has(.neutral) label { color: var(--color-neutral); }
+.scoring-inputs .form-group:has(.against) label { color: var(--color-against); }
+
 /* Phase actions */
 .phase-actions {
   display: flex;

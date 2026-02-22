@@ -229,6 +229,25 @@ export function handleConnection(ws, sessionId) {
         break;
       }
 
+      case 'set-scoring': {
+        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
+        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can change scoring' });
+        if (session.phase !== 'adding') return send(ws, { type: 'error', message: 'Scoring can only be changed during adding phase' });
+
+        const { favor, neutral, against } = msg;
+        if (![favor, neutral, against].every(v => Number.isInteger(v))) {
+          return send(ws, { type: 'error', message: 'Scoring values must be integers' });
+        }
+
+        session.scoringRules = { favor, neutral, against };
+        info(`[${sessionId}] Scoring updated: favor=${favor}, neutral=${neutral}, against=${against}`);
+
+        const payload = { type: 'scoring-updated', scoringRules: session.scoringRules };
+        send(ws, payload);
+        broadcast(sessionId, payload, ws);
+        break;
+      }
+
       case 'prev-phase': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
         if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can go back' });

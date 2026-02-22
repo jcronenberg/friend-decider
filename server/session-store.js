@@ -17,6 +17,7 @@ export class Session {
     this.items = new Map(); // itemId -> Item
     this.participants = new Map(); // participantId -> { name, connected }
     this.creatorId = creatorId;
+    this.scoringRules = { favor: 2, neutral: 0, against: -5 };
     this.doneParticipants = new Set(); // participantIds who clicked Done this phase
     this.allDisconnectedAt = null;
     this.createdAt = Date.now();
@@ -30,6 +31,7 @@ export class Session {
       participants: Object.fromEntries(
         [...this.participants.entries()].map(([id, p]) => [id, { name: p.name, connected: p.connected }])
       ),
+      scoringRules: { ...this.scoringRules },
       doneParticipants: [...this.doneParticipants],
       results: this.results || null,
       items: [...this.items.values()].map(item => ({

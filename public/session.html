@@ -59,6 +59,7 @@
       <main>
         <!-- Adding Phase -->
         <section id="phase-adding" class="phase-section hidden">
+          <div id="scoring-config" class="card scoring-config-card hidden"></div>
           <div class="card">
             <h2>Add Items</h2>
             <form id="add-item-form">
@@ -68,6 +69,7 @@
               </div>
               <div id="item-error" class="error-msg hidden"></div>
             </form>
+            <div id="scoring-adding-display" class="scoring-rules hidden"></div>
             <ul id="items-list" class="items-list"></ul>
             <div class="phase-actions">
               <span id="adding-ready-count" class="ready-count"></span>
@@ -81,6 +83,7 @@
         <section id="phase-voting" class="phase-section hidden">
           <div class="card">
             <h2>Vote on Items</h2>
+            <div id="scoring-display" class="scoring-rules"></div>
             <ul id="voting-list" class="items-list voting-list"></ul>
             <div class="phase-actions">
               <span id="voting-ready-count" class="ready-count"></span>
