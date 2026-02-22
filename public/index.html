@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friend Decider</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Friend Decider</h1>
+      <p class="subtitle">Collectively decide what to do with your friends</p>
+    </header>
+
+    <main>
+      <div id="recent-sessions" class="hidden card">
+        <h2>Recent Sessions</h2>
+        <ul id="recent-list" class="recent-list"></ul>
+      </div>
+
+      <div class="card">
+        <h2>Create a Session</h2>
+        <form id="create-form">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" placeholder="Enter your name" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="password">Session Password</label>
+            <input type="password" id="password" placeholder="Enter creation password" required>
+          </div>
+          <div id="error-msg" class="error-msg hidden"></div>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Create Session</button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>

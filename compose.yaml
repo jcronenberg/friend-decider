@@ -1,0 +1,10 @@
+services:
+  friend-decider:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      CREATION_PASSWORD: changeme
+      # PORT: 3000
+      # HOST: "::"
+    restart: unless-stopped

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friend Decider - Session</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Invalid session error screen -->
+  <div id="invalid-session" class="hidden">
+    <div class="container">
+      <header><h1>Friend Decider</h1></header>
+      <div class="card error-screen">
+        <h2>Session Not Found</h2>
+        <p>This session doesn't exist or has expired.</p>
+        <a href="/" class="btn btn-primary">Go Home</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Name prompt modal -->
+  <div id="name-modal" class="modal hidden">
+    <div class="modal-content card">
+      <h2>Join Session</h2>
+      <div class="form-group">
+        <label for="participant-name">Your Name</label>
+        <input type="text" id="participant-name" placeholder="Enter your name" required autocomplete="off">
+      </div>
+      <div id="name-error" class="error-msg hidden"></div>
+      <button id="join-btn" class="btn btn-primary">Join</button>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="container">
+      <header>
+        <div class="header-row">
+          <h1><a href="/" class="home-link">Friend Decider</a></h1>
+          <div class="header-actions">
+            <button id="copy-link-btn" class="btn btn-secondary">Copy Link</button>
+            <span id="connection-status" class="status-dot disconnected" title="Disconnected"></span>
+          </div>
+        </div>
+        <div id="phase-indicator" class="phase-indicator"></div>
+        <div id="participants-list" class="participants-list"></div>
+      </header>
+
+      <main>
+        <!-- Adding Phase -->
+        <section id="phase-adding" class="phase-section hidden">
+          <div class="card">
+            <h2>Add Items</h2>
+            <form id="add-item-form">
+              <div class="form-group input-row">
+                <input type="text" id="item-input" placeholder="e.g., Play Codenames" autocomplete="off">
+                <button type="submit" class="btn btn-primary">Add</button>
+              </div>
+              <div id="item-error" class="error-msg hidden"></div>
+            </form>
+            <ul id="items-list" class="items-list"></ul>
+            <div class="phase-actions">
+              <span id="adding-ready-count" class="ready-count"></span>
+              <button id="done-adding-btn" class="btn btn-done">I'm Done</button>
+              <button id="start-voting-btn" class="btn btn-success creator-only hidden">Start Voting</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Voting Phase -->
+        <section id="phase-voting" class="phase-section hidden">
+          <div class="card">
+            <h2>Vote on Items</h2>
+            <ul id="voting-list" class="items-list voting-list"></ul>
+            <div class="phase-actions">
+              <span id="voting-ready-count" class="ready-count"></span>
+              <button id="done-voting-btn" class="btn btn-done">I'm Done</button>
+              <button id="back-to-adding-btn" class="btn btn-secondary creator-only hidden">Back to Adding</button>
+              <button id="show-results-btn" class="btn btn-success creator-only hidden">Show Results</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Results Phase -->
+        <section id="phase-results" class="phase-section hidden">
+          <div class="card">
+            <h2>Results</h2>
+            <ol id="results-list" class="results-list"></ol>
+            <div class="phase-actions" style="margin-top:16px">
+              <button id="back-to-voting-btn" class="btn btn-secondary creator-only hidden">Back to Voting</button>
+              <a href="/" class="btn btn-secondary">Go Home</a>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/session.js"></script>
+</body>
+</html>
