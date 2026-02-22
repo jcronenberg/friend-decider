@@ -19,6 +19,15 @@
     </div>
   </div>
 
+  <!-- QR Code modal -->
+  <div id="qr-modal" class="modal hidden" id="qr-modal">
+    <div class="modal-content card qr-card">
+      <h2>Scan to Join</h2>
+      <div id="qr-image"></div>
+      <button id="qr-close-btn" class="btn btn-secondary" style="margin-top:16px;width:100%">Close</button>
+    </div>
+  </div>
+
   <!-- Name prompt modal -->
   <div id="name-modal" class="modal hidden">
     <div class="modal-content card">
@@ -38,6 +47,7 @@
         <div class="header-row">
           <h1><a href="/" class="home-link">Friend Decider</a></h1>
           <div class="header-actions">
+            <button id="qr-btn" class="btn btn-secondary">QR Code</button>
             <button id="copy-link-btn" class="btn btn-secondary">Copy Link</button>
             <span id="connection-status" class="status-dot disconnected" title="Disconnected"></span>
           </div>

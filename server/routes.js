@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { createSession, getSession } from './session-store.js';
 import { info, warn } from './log.js';
 import { CREATION_PASSWORDS } from './config.js';
+import QRCode from 'qrcode';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -57,6 +58,16 @@ router.get('/api/sessions/:id', (req, res) => {
   const session = getSession(req.params.id);
   if (!session) return res.status(404).json({ error: 'Session not found' });
   res.json(session.toJSON());
+});
+
+router.get('/api/sessions/:id/qr', async (req, res) => {
+  const session = getSession(req.params.id);
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+
+  const url = `${req.protocol}://${req.get('host')}/session/${req.params.id}`;
+  const svg = await QRCode.toString(url, { type: 'svg', margin: 1 });
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svg);
 });
 
 router.get('/session/:id', (req, res) => {

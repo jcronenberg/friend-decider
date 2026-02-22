@@ -16,6 +16,10 @@ const participantNameInput = document.getElementById('participant-name');
 const joinBtn = document.getElementById('join-btn');
 const nameError = document.getElementById('name-error');
 const copyLinkBtn = document.getElementById('copy-link-btn');
+const qrBtn = document.getElementById('qr-btn');
+const qrModal = document.getElementById('qr-modal');
+const qrImage = document.getElementById('qr-image');
+const qrCloseBtn = document.getElementById('qr-close-btn');
 const connectionDot = document.getElementById('connection-status');
 const phaseIndicator = document.getElementById('phase-indicator');
 const participantsList = document.getElementById('participants-list');
@@ -400,6 +404,17 @@ backToVotingBtn.addEventListener('click', () => {
 showResultsBtn.addEventListener('click', () => {
   ws.send(JSON.stringify({ type: 'show-results' }));
 });
+
+qrBtn.addEventListener('click', async () => {
+  if (!qrImage.innerHTML) {
+    const res = await fetch(`/api/sessions/${sessionId}/qr`);
+    qrImage.innerHTML = await res.text();
+  }
+  qrModal.classList.remove('hidden');
+});
+
+qrCloseBtn.addEventListener('click', () => qrModal.classList.add('hidden'));
+qrModal.addEventListener('click', e => { if (e.target === qrModal) qrModal.classList.add('hidden'); });
 
 copyLinkBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(location.href).then(() => {

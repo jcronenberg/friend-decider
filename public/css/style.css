@@ -406,6 +406,22 @@ input:focus { border-color: var(--color-primary); }
   margin-left: 12px;
 }
 
+/* QR code */
+.qr-card {
+  text-align: center;
+  max-width: 280px;
+}
+
+.qr-card h2 {
+  margin-bottom: 16px;
+}
+
+#qr-image svg {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
 /* Error screen */
 .error-screen {
   text-align: center;
