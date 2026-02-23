@@ -1,13 +1,14 @@
 // Extract session ID from URL
 const sessionId = location.pathname.split('/').pop();
 const participantKey = `participant:${sessionId}`;
+const viewKey = `view:${sessionId}`;
 
 let ws = null;
 let myParticipantId = localStorage.getItem(participantKey) || null;
 let myName = localStorage.getItem('friendDeciderName') || '';
 let state = null; // full session state
 let reconnectTimer = null;
-let currentView = 'adding'; // 'adding' | 'voting' | 'results'
+let currentView = localStorage.getItem(viewKey) || 'adding'; // 'adding' | 'voting' | 'results'
 
 // DOM refs
 const invalidScreen = document.getElementById('invalid-session');
@@ -42,6 +43,11 @@ const votingList = document.getElementById('voting-list');
 const resultsList = document.getElementById('results-list');
 const viewBackBtn = document.getElementById('view-back-btn');
 const viewNextBtn = document.getElementById('view-next-btn');
+const navWarning = document.getElementById('nav-warning');
+const confirmModal = document.getElementById('confirm-modal');
+const confirmMessage = document.getElementById('confirm-message');
+const confirmOkBtn = document.getElementById('confirm-ok-btn');
+const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
 
 // --- Name prompt ---
 
@@ -226,16 +232,67 @@ function renderView() {
   viewResults.classList.toggle('hidden', currentView !== 'results');
   const views = ['adding', 'voting', 'results'];
   const idx = views.indexOf(currentView);
-  viewBackBtn.classList.toggle('hidden', idx === 0);
+  const locked = state && state.lockNavigation;
+  viewBackBtn.classList.toggle('hidden', idx === 0 || locked);
   viewNextBtn.classList.toggle('hidden', idx === views.length - 1);
+  tabBtns.forEach(b => {
+    const toIdx = views.indexOf(b.dataset.view);
+    b.disabled = locked && (toIdx < idx || toIdx > idx + 1);
+  });
   if (currentView === 'voting') renderVoting();
   if (currentView === 'results') renderResults(computeResults());
 }
 
-function switchView(view) {
+let navWarningTimer = null;
+function showNavWarning(msg) {
+  navWarning.textContent = msg;
+  navWarning.classList.remove('hidden');
+  clearTimeout(navWarningTimer);
+  navWarningTimer = setTimeout(() => navWarning.classList.add('hidden'), 3000);
+}
+
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    confirmMessage.textContent = msg;
+    confirmModal.classList.remove('hidden');
+    function finish(result) {
+      confirmModal.classList.add('hidden');
+      confirmOkBtn.removeEventListener('click', onOk);
+      confirmCancelBtn.removeEventListener('click', onCancel);
+      confirmModal.removeEventListener('click', onBackdrop);
+      resolve(result);
+    }
+    function onOk() { finish(true); }
+    function onCancel() { finish(false); }
+    function onBackdrop(e) { if (e.target === confirmModal) finish(false); }
+    confirmOkBtn.addEventListener('click', onOk);
+    confirmCancelBtn.addEventListener('click', onCancel);
+    confirmModal.addEventListener('click', onBackdrop);
+  });
+}
+
+async function switchView(view) {
+  const views = ['adding', 'voting', 'results'];
+  if (state && state.lockNavigation) {
+    const fromIdx = views.indexOf(currentView);
+    const toIdx = views.indexOf(view);
+    if (toIdx < fromIdx) {
+      showNavWarning("Navigation is locked — you can't go back.");
+      return;
+    }
+    if (toIdx > fromIdx + 1) {
+      showNavWarning("You must complete each stage in order.");
+      return;
+    }
+    if (toIdx > fromIdx) {
+      const ok = await showConfirm("Are you sure you want to continue? You won't be able to go back.");
+      if (!ok) return;
+    }
+  }
   const wasOnResults = currentView === 'results';
   const nowOnResults = view === 'results';
   currentView = view;
+  localStorage.setItem(viewKey, currentView);
   if (wasOnResults !== nowOnResults) {
     ws.send(JSON.stringify({ type: 'set-done', isDone: nowOnResults }));
   }
@@ -311,7 +368,8 @@ function renderScoringRules() {
           <label for="score-against">Against</label>
           <input type="number" id="score-against" class="scoring-input against" value="${against}">
         </div>
-      </div>`;
+      </div>
+`;
     ['favor', 'neutral', 'against'].forEach(key => {
       document.getElementById(`score-${key}`).addEventListener('change', sendScoringUpdate);
     });

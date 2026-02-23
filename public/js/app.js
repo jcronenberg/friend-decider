@@ -75,6 +75,7 @@ form.addEventListener('submit', async e => {
   const sessionName = document.getElementById('session-name').value.trim();
   const name = document.getElementById('name').value.trim();
   const password = passwordRequired ? passwordInput.value : undefined;
+  const lockNavigation = document.getElementById('lock-navigation').checked;
 
   if (!sessionName) return showError('Please enter what you are deciding');
   if (!name) return showError('Please enter your name');
@@ -86,7 +87,7 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(password !== undefined && { password }), creatorName: name, sessionName }),
+      body: JSON.stringify({ ...(password !== undefined && { password }), creatorName: name, sessionName, lockNavigation }),
     });
 
     const data = await res.json();

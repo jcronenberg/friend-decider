@@ -183,6 +183,10 @@ input:focus { border-color: var(--color-primary); }
   border-color: var(--color-primary);
   color: white;
 }
+.tab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* Participants */
 .participants-list {
@@ -339,6 +343,33 @@ input:focus { border-color: var(--color-primary); }
 .scoring-inputs .form-group:has(.neutral) label { color: var(--color-neutral); }
 .scoring-inputs .form-group:has(.against) label { color: var(--color-against); }
 
+/* Lock nav checkbox (creation form) */
+.lock-nav-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.lock-nav-label input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+/* Nav warning */
+.nav-warning {
+  font-size: 0.85rem;
+  color: var(--color-neutral);
+  padding: 6px 10px;
+  background: rgba(234,179,8,0.1);
+  border: 1px solid rgba(234,179,8,0.3);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+
 /* View navigation */
 .view-nav {
   display: flex;
@@ -421,6 +452,13 @@ input:focus { border-color: var(--color-primary); }
 .modal-content {
   width: 100%;
   max-width: 400px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 /* Header actions */

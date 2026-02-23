@@ -28,6 +28,17 @@
     </div>
   </div>
 
+  <!-- Confirm modal -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content card">
+      <p id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button id="confirm-ok-btn" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Name prompt modal -->
   <div id="name-modal" class="modal hidden">
     <div class="modal-content card">
@@ -98,6 +109,7 @@
           </div>
         </section>
 
+        <div id="nav-warning" class="nav-warning hidden"></div>
         <div class="view-nav">
           <button id="view-back-btn" class="btn btn-secondary hidden">Back</button>
           <button id="view-next-btn" class="btn btn-primary hidden">Next</button>

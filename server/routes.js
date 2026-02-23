@@ -46,7 +46,7 @@ router.post('/api/sessions', (req, res) => {
     return res.status(429).json({ error: 'Too many attempts. Try again later.' });
   }
 
-  const { password, creatorName, sessionName } = req.body;
+  const { password, creatorName, sessionName, lockNavigation } = req.body;
 
   if (CREATION_PASSWORDS.length > 0 && !CREATION_PASSWORDS.includes(password)) {
     warn(`Session creation rejected - bad password (creator: "${creatorName}")`);
@@ -62,7 +62,7 @@ router.post('/api/sessions', (req, res) => {
   }
 
   const creatorId = randomUUID();
-  const session = createSession(creatorId, creatorName.trim(), ip, sessionName.trim());
+  const session = createSession(creatorId, creatorName.trim(), ip, sessionName.trim(), lockNavigation === true);
 
   info(`Session created: ${session.id} "${sessionName.trim()}" by "${creatorName.trim()}"`);
   res.json({ sessionId: session.id, participantId: creatorId });

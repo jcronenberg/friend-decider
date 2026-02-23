@@ -18,6 +18,7 @@ export class Session {
     this.participants = new Map(); // participantId -> { name, connected }
     this.creatorId = creatorId;
     this.scoringRules = { favor: 2, neutral: 0, against: -5 };
+    this.lockNavigation = false;
     this.doneParticipants = new Set(); // participantIds currently viewing results
     this.allDisconnectedAt = null;
     this.createdAt = Date.now();
@@ -32,6 +33,7 @@ export class Session {
         [...this.participants.entries()].map(([id, p]) => [id, { name: p.name, connected: p.connected }])
       ),
       scoringRules: { ...this.scoringRules },
+      lockNavigation: this.lockNavigation,
       doneParticipants: [...this.doneParticipants],
       items: [...this.items.values()].map(item => ({
         id: item.id,
@@ -45,10 +47,11 @@ export class Session {
 
 const sessions = new Map();
 
-export function createSession(creatorId, creatorName, creatorIp, sessionName) {
+export function createSession(creatorId, creatorName, creatorIp, sessionName, lockNavigation = false) {
   const id = randomUUID();
   const session = new Session(id, creatorId, creatorName, sessionName);
   session.creatorIp = creatorIp || null;
+  session.lockNavigation = lockNavigation;
   session.participants.set(creatorId, { name: creatorName, connected: false });
   sessions.set(id, session);
   return session;
