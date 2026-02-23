@@ -142,6 +142,7 @@ input:focus { border-color: var(--color-primary); }
   margin-bottom: 0;
 }
 .input-row input { flex: 1; margin-bottom: 0; }
+.input-row .btn { padding-top: 10px; padding-bottom: 10px; }
 
 .error-msg {
   color: var(--color-danger);
