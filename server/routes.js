@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { randomUUID } from 'crypto';
-import { createSession, getSession } from './session-store.js';
+import { createSession, getSession, countSessionsByIp } from './session-store.js';
 import { info, warn } from './log.js';
-import { CREATION_PASSWORDS } from './config.js';
+import { CREATION_PASSWORDS, MAX_SESSIONS_PER_IP } from './config.js';
 import QRCode from 'qrcode';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -28,6 +28,12 @@ router.get('/api/config', (req, res) => {
 
 router.post('/api/sessions', (req, res) => {
   const ip = req.ip;
+
+  if (MAX_SESSIONS_PER_IP > 0 && countSessionsByIp(ip) >= MAX_SESSIONS_PER_IP) {
+    warn(`Session limit reached for ${ip} (limit: ${MAX_SESSIONS_PER_IP})`);
+    return res.status(429).json({ error: `Session limit reached. You can have at most ${MAX_SESSIONS_PER_IP} active sessions.` });
+  }
+
   const now = Date.now();
   let entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
@@ -52,7 +58,7 @@ router.post('/api/sessions', (req, res) => {
   }
 
   const creatorId = randomUUID();
-  const session = createSession(creatorId, creatorName.trim());
+  const session = createSession(creatorId, creatorName.trim(), ip);
 
   info(`Session created: ${session.id} by "${creatorName.trim()}"`);
   res.json({ sessionId: session.id, participantId: creatorId });

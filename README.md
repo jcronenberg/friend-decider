@@ -38,6 +38,7 @@ CREATION_PASSWORD=yourpassword node server/index.js
 | Environment variable | Required | Description |
 |---|---|---|
 | `CREATION_PASSWORD` | No | Comma-separated list of passwords that allow session creation (e.g. `alice123,bob456`). Min 8 characters per password recommended. If unset, session creation is open to anyone. |
+| `MAX_SESSIONS_PER_IP` | No | Max number of active sessions a single IP can create. Defaults to `5`. Set to `0` to disable the limit. |
 | `PORT` | No | Port to listen on. Defaults to `3000`. |
 | `HOST` | No | Address to bind to. Defaults to `::` (all interfaces, IPv4+IPv6). Set to `::1` for IPv6 localhost or `127.0.0.1` for IPv4 localhost only. |
 

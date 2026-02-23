@@ -46,12 +46,21 @@ export class Session {
 
 const sessions = new Map();
 
-export function createSession(creatorId, creatorName) {
+export function createSession(creatorId, creatorName, creatorIp) {
   const id = randomUUID();
   const session = new Session(id, creatorId, creatorName);
+  session.creatorIp = creatorIp || null;
   session.participants.set(creatorId, { name: creatorName, connected: false });
   sessions.set(id, session);
   return session;
+}
+
+export function countSessionsByIp(ip) {
+  let count = 0;
+  for (const session of sessions.values()) {
+    if (session.creatorIp === ip) count++;
+  }
+  return count;
 }
 
 export function getSession(id) {
