@@ -14,12 +14,11 @@ export class Session {
   constructor(id, creatorId, creatorName, sessionName) {
     this.id = id;
     this.name = sessionName;
-    this.phase = 'adding'; // 'adding'|'voting'|'results'
     this.items = new Map(); // itemId -> Item
     this.participants = new Map(); // participantId -> { name, connected }
     this.creatorId = creatorId;
     this.scoringRules = { favor: 2, neutral: 0, against: -5 };
-    this.doneParticipants = new Set(); // participantIds who clicked Done this phase
+    this.doneParticipants = new Set(); // participantIds currently viewing results
     this.allDisconnectedAt = null;
     this.createdAt = Date.now();
   }
@@ -28,14 +27,12 @@ export class Session {
     return {
       id: this.id,
       name: this.name,
-      phase: this.phase,
       creatorId: this.creatorId,
       participants: Object.fromEntries(
         [...this.participants.entries()].map(([id, p]) => [id, { name: p.name, connected: p.connected }])
       ),
       scoringRules: { ...this.scoringRules },
       doneParticipants: [...this.doneParticipants],
-      results: this.results || null,
       items: [...this.items.values()].map(item => ({
         id: item.id,
         text: item.text,

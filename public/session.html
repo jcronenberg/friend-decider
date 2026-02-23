@@ -54,13 +54,18 @@
           </div>
         </div>
         <div id="session-name-display" class="session-name hidden"></div>
-        <div id="phase-indicator" class="phase-indicator"></div>
         <div id="participants-list" class="participants-list"></div>
       </header>
 
       <main>
-        <!-- Adding Phase -->
-        <section id="phase-adding" class="phase-section hidden">
+        <nav class="view-tabs">
+          <button class="tab-btn active" data-view="adding">Items</button>
+          <button class="tab-btn" data-view="voting">Voting</button>
+          <button class="tab-btn" data-view="results">Results</button>
+        </nav>
+
+        <!-- Adding View -->
+        <section id="view-adding" class="view-section">
           <div id="scoring-config" class="card scoring-config-card hidden"></div>
           <div class="card">
             <h2>Add Items</h2>
@@ -73,40 +78,30 @@
             </form>
             <div id="scoring-adding-display" class="scoring-rules hidden"></div>
             <ul id="items-list" class="items-list"></ul>
-            <div class="phase-actions">
-              <span id="adding-ready-count" class="ready-count"></span>
-              <button id="done-adding-btn" class="btn btn-done">I'm Done</button>
-              <button id="start-voting-btn" class="btn btn-success creator-only hidden">Start Voting</button>
-            </div>
           </div>
         </section>
 
-        <!-- Voting Phase -->
-        <section id="phase-voting" class="phase-section hidden">
+        <!-- Voting View -->
+        <section id="view-voting" class="view-section hidden">
           <div class="card">
             <h2>Vote on Items</h2>
             <div id="scoring-display" class="scoring-rules"></div>
             <ul id="voting-list" class="items-list voting-list"></ul>
-            <div class="phase-actions">
-              <span id="voting-ready-count" class="ready-count"></span>
-              <button id="done-voting-btn" class="btn btn-done">I'm Done</button>
-              <button id="back-to-adding-btn" class="btn btn-secondary creator-only hidden">Back to Adding</button>
-              <button id="show-results-btn" class="btn btn-success creator-only hidden">Show Results</button>
-            </div>
           </div>
         </section>
 
-        <!-- Results Phase -->
-        <section id="phase-results" class="phase-section hidden">
+        <!-- Results View -->
+        <section id="view-results" class="view-section hidden">
           <div class="card">
             <h2>Results</h2>
             <ol id="results-list" class="results-list"></ol>
-            <div class="phase-actions" style="margin-top:16px">
-              <button id="back-to-voting-btn" class="btn btn-secondary creator-only hidden">Back to Voting</button>
-              <a href="/" class="btn btn-secondary">Go Home</a>
-            </div>
           </div>
         </section>
+
+        <div class="view-nav">
+          <button id="view-back-btn" class="btn btn-secondary hidden">Back</button>
+          <button id="view-next-btn" class="btn btn-primary hidden">Next</button>
+        </div>
       </main>
     </div>
   </div>

@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import { getSession } from './session-store.js';
-import { rankItems } from './scoring.js';
 import { info, warn } from './log.js';
 
 // connections: sessionId -> Set of { ws, participantId }
@@ -23,36 +22,6 @@ function broadcast(sessionId, message, excludeWs = null) {
 
 function send(ws, message) {
   if (ws.readyState === 1) ws.send(JSON.stringify(message));
-}
-
-function connectedIds(session) {
-  return [...session.participants.entries()]
-    .filter(([, p]) => p.connected)
-    .map(([id]) => id);
-}
-
-function advancePhase(session, sessionId, triggerWs, expectedPhase) {
-  if (expectedPhase && session.phase !== expectedPhase) return; // already advanced
-  if (session.phase === 'adding' && session.items.size === 0) {
-    send(triggerWs, { type: 'error', message: 'Add at least one item before starting voting' });
-    return;
-  }
-  session.doneParticipants.clear();
-  if (session.phase === 'adding') {
-    session.phase = 'voting';
-    info(`[${sessionId}] Phase changed: adding -> voting (${session.items.size} items)`);
-    const payload = { type: 'phase-changed', phase: 'voting' };
-    send(triggerWs, payload);
-    broadcast(sessionId, payload, triggerWs);
-  } else if (session.phase === 'voting') {
-    session.phase = 'results';
-    info(`[${sessionId}] Phase changed: voting -> results`);
-    const ranked = rankItems(session);
-    session.results = ranked;
-    const payload = { type: 'results', results: ranked };
-    send(triggerWs, payload);
-    broadcast(sessionId, payload, triggerWs);
-  }
 }
 
 export function handleConnection(ws, sessionId) {
@@ -125,7 +94,6 @@ export function handleConnection(ws, sessionId) {
 
       case 'add-item': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (session.phase !== 'adding') return send(ws, { type: 'error', message: 'Not in adding phase' });
 
         const { text } = msg;
         if (!text || typeof text !== 'string' || !text.trim()) {
@@ -148,7 +116,6 @@ export function handleConnection(ws, sessionId) {
 
       case 'remove-item': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (session.phase !== 'adding') return send(ws, { type: 'error', message: 'Not in adding phase' });
 
         const { itemId } = msg;
         const item = session.items.get(itemId);
@@ -165,18 +132,8 @@ export function handleConnection(ws, sessionId) {
         break;
       }
 
-      case 'start-voting': {
-        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can start voting' });
-        if (session.phase !== 'adding') return send(ws, { type: 'error', message: 'Already past adding phase' });
-        info(`[${sessionId}] Host manually advanced to voting`);
-        advancePhase(session, sessionId, ws, 'adding');
-        break;
-      }
-
       case 'vote': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (session.phase !== 'voting') return send(ws, { type: 'error', message: 'Not in voting phase' });
 
         const { itemId, vote } = msg;
         if (!['favor', 'neutral', 'against'].includes(vote)) {
@@ -194,45 +151,25 @@ export function handleConnection(ws, sessionId) {
         break;
       }
 
-      case 'show-results': {
+      case 'set-done': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can show results' });
-        if (session.phase !== 'voting') return send(ws, { type: 'error', message: 'Not in voting phase' });
-        info(`[${sessionId}] Host manually advanced to results`);
-        advancePhase(session, sessionId, ws, 'voting');
-        break;
-      }
 
-      case 'mark-done': {
-        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (!['adding', 'voting'].includes(session.phase)) return;
-
-        const isDone = !session.doneParticipants.has(participantId);
+        const { isDone } = msg;
         if (isDone) session.doneParticipants.add(participantId);
         else session.doneParticipants.delete(participantId);
 
-        const connected = connectedIds(session);
-        const doneCount = connected.filter(id => session.doneParticipants.has(id)).length;
         const name = session.participants.get(participantId)?.name ?? participantId;
-        info(`[${sessionId}] "${name}" marked ${isDone ? 'done' : 'not done'} (${doneCount}/${connected.length})`);
+        info(`[${sessionId}] "${name}" ${isDone ? 'viewing results' : 'left results'}`);
 
-        const payload = { type: 'done-updated', participantId, isDone, doneCount, totalConnected: connected.length };
+        const payload = { type: 'done-updated', participantId, isDone };
         send(ws, payload);
         broadcast(sessionId, payload, ws);
-
-        // Auto-advance if everyone connected is done
-        const currentPhase = session.phase;
-        if (connected.length > 0 && connected.every(id => session.doneParticipants.has(id))) {
-          info(`[${sessionId}] All participants done - auto-advancing`);
-          advancePhase(session, sessionId, ws, currentPhase);
-        }
         break;
       }
 
       case 'set-scoring': {
         if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
         if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can change scoring' });
-        if (session.phase !== 'adding') return send(ws, { type: 'error', message: 'Scoring can only be changed during adding phase' });
 
         const { favor, neutral, against } = msg;
         if (![favor, neutral, against].every(v => Number.isInteger(v))) {
@@ -243,30 +180,6 @@ export function handleConnection(ws, sessionId) {
         info(`[${sessionId}] Scoring updated: favor=${favor}, neutral=${neutral}, against=${against}`);
 
         const payload = { type: 'scoring-updated', scoringRules: session.scoringRules };
-        send(ws, payload);
-        broadcast(sessionId, payload, ws);
-        break;
-      }
-
-      case 'prev-phase': {
-        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
-        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only creator can go back' });
-
-        if (session.phase === 'voting') {
-          // Clear all votes so the adding phase starts fresh
-          for (const item of session.items.values()) item.votes.clear();
-          session.phase = 'adding';
-          info(`[${sessionId}] Host went back: voting -> adding`);
-        } else if (session.phase === 'results') {
-          session.results = null;
-          session.phase = 'voting';
-          info(`[${sessionId}] Host went back: results -> voting`);
-        } else {
-          return;
-        }
-
-        session.doneParticipants.clear();
-        const payload = { type: 'phase-changed', phase: session.phase };
         send(ws, payload);
         broadcast(sessionId, payload, ws);
         break;

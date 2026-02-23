@@ -7,6 +7,7 @@ let myParticipantId = localStorage.getItem(participantKey) || null;
 let myName = localStorage.getItem('friendDeciderName') || '';
 let state = null; // full session state
 let reconnectTimer = null;
+let currentView = 'adding'; // 'adding' | 'voting' | 'results'
 
 // DOM refs
 const invalidScreen = document.getElementById('invalid-session');
@@ -21,13 +22,13 @@ const qrModal = document.getElementById('qr-modal');
 const qrImage = document.getElementById('qr-image');
 const qrCloseBtn = document.getElementById('qr-close-btn');
 const connectionDot = document.getElementById('connection-status');
-const phaseIndicator = document.getElementById('phase-indicator');
 const sessionNameDisplay = document.getElementById('session-name-display');
 const participantsList = document.getElementById('participants-list');
 
-const phaseAdding = document.getElementById('phase-adding');
-const phaseVoting = document.getElementById('phase-voting');
-const phaseResults = document.getElementById('phase-results');
+const tabBtns = document.querySelectorAll('.tab-btn');
+const viewAdding = document.getElementById('view-adding');
+const viewVoting = document.getElementById('view-voting');
+const viewResults = document.getElementById('view-results');
 
 const scoringConfig = document.getElementById('scoring-config');
 const scoringAddingDisplay = document.getElementById('scoring-adding-display');
@@ -36,18 +37,11 @@ const addItemForm = document.getElementById('add-item-form');
 const itemInput = document.getElementById('item-input');
 const itemError = document.getElementById('item-error');
 const itemsList = document.getElementById('items-list');
-const startVotingBtn = document.getElementById('start-voting-btn');
 
-const doneAddingBtn = document.getElementById('done-adding-btn');
-const addingReadyCount = document.getElementById('adding-ready-count');
 const votingList = document.getElementById('voting-list');
-const doneVotingBtn = document.getElementById('done-voting-btn');
-const votingReadyCount = document.getElementById('voting-ready-count');
-const backToAddingBtn = document.getElementById('back-to-adding-btn');
-const showResultsBtn = document.getElementById('show-results-btn');
-const backToVotingBtn = document.getElementById('back-to-voting-btn');
-
 const resultsList = document.getElementById('results-list');
+const viewBackBtn = document.getElementById('view-back-btn');
+const viewNextBtn = document.getElementById('view-next-btn');
 
 // --- Name prompt ---
 
@@ -137,7 +131,7 @@ function handleMessage(msg) {
       if (state) {
         state.participants[msg.participantId] = { name: msg.name, connected: true };
         renderParticipants();
-        refreshReadyCount();
+        if (currentView === 'results') renderResults(computeResults());
       }
       break;
     }
@@ -145,7 +139,6 @@ function handleMessage(msg) {
       if (state && state.participants[msg.participantId]) {
         state.participants[msg.participantId].connected = false;
         renderParticipants();
-        refreshReadyCount();
       }
       break;
     }
@@ -154,6 +147,7 @@ function handleMessage(msg) {
         state.items.push(msg.item);
         itemError.classList.add('hidden');
         renderItems();
+        if (currentView === 'results') renderResults(computeResults());
       }
       break;
     }
@@ -161,22 +155,7 @@ function handleMessage(msg) {
       if (state) {
         state.items = state.items.filter(i => i.id !== msg.itemId);
         renderItems();
-      }
-      break;
-    }
-    case 'phase-changed': {
-      if (state) {
-        if (msg.phase === 'adding') {
-          // Votes were cleared server-side; clear locally too
-          state.items.forEach(item => { item.votes = {}; });
-        }
-        state.phase = msg.phase;
-        state.doneParticipants = [];
-        renderParticipants();
-        renderPhase();
-        renderScoringRules();
-        renderDoneButton();
-        refreshReadyCount();
+        if (currentView === 'results') renderResults(computeResults());
       }
       break;
     }
@@ -188,8 +167,6 @@ function handleMessage(msg) {
           state.doneParticipants = state.doneParticipants.filter(id => id !== msg.participantId);
         }
         renderParticipants();
-        renderDoneButton();
-        renderReadyCount(msg.doneCount, msg.totalConnected);
       }
       break;
     }
@@ -197,6 +174,7 @@ function handleMessage(msg) {
       if (state) {
         state.scoringRules = msg.scoringRules;
         renderScoringRules();
+        if (currentView === 'results') renderResults(computeResults());
       }
       break;
     }
@@ -207,17 +185,7 @@ function handleMessage(msg) {
           item.votes[msg.participantId] = msg.vote;
           updateVoteButton(msg.itemId, msg.participantId, msg.vote);
         }
-      }
-      break;
-    }
-    case 'results': {
-      if (state) {
-        state.phase = 'results';
-        state.doneParticipants = [];
-        renderParticipants();
-        renderDoneButton();
-        renderResults(msg.results);
-        renderPhase();
+        if (currentView === 'results') renderResults(computeResults());
       }
       break;
     }
@@ -246,20 +214,72 @@ function renderSessionName() {
 function renderAll() {
   renderSessionName();
   renderParticipants();
-  renderPhase();
   renderItems();
   renderScoringRules();
-  renderDoneButton();
-  const connected = Object.values(state.participants).filter(p => p.connected).length;
-  const doneCount = state.doneParticipants.filter(id => state.participants[id]?.connected).length;
-  renderReadyCount(doneCount, connected);
+  renderView();
+}
+
+function renderView() {
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+  viewAdding.classList.toggle('hidden', currentView !== 'adding');
+  viewVoting.classList.toggle('hidden', currentView !== 'voting');
+  viewResults.classList.toggle('hidden', currentView !== 'results');
+  const views = ['adding', 'voting', 'results'];
+  const idx = views.indexOf(currentView);
+  viewBackBtn.classList.toggle('hidden', idx === 0);
+  viewNextBtn.classList.toggle('hidden', idx === views.length - 1);
+  if (currentView === 'voting') renderVoting();
+  if (currentView === 'results') renderResults(computeResults());
+}
+
+function switchView(view) {
+  const wasOnResults = currentView === 'results';
+  const nowOnResults = view === 'results';
+  currentView = view;
+  if (wasOnResults !== nowOnResults) {
+    ws.send(JSON.stringify({ type: 'set-done', isDone: nowOnResults }));
+  }
+  renderView();
+}
+
+tabBtns.forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+
+const views = ['adding', 'voting', 'results'];
+viewBackBtn.addEventListener('click', () => {
+  const idx = views.indexOf(currentView);
+  if (idx > 0) switchView(views[idx - 1]);
+});
+viewNextBtn.addEventListener('click', () => {
+  const idx = views.indexOf(currentView);
+  if (idx < views.length - 1) switchView(views[idx + 1]);
+});
+
+function computeResults() {
+  if (!state) return [];
+  const { favor: fPts, neutral: nPts, against: aPts } = state.scoringRules;
+  const pids = Object.keys(state.participants);
+  return state.items.map(item => {
+    let favor = 0, neutral = 0, against = 0;
+    for (const pid of pids) {
+      const v = item.votes[pid] || 'favor';
+      if (v === 'favor') favor++;
+      else if (v === 'neutral') neutral++;
+      else against++;
+    }
+    const score = favor * fPts + neutral * nPts + against * aPts;
+    return { ...item, score, votes: { favor, neutral, against } };
+  }).sort((a, b) =>
+    b.score - a.score ||
+    a.votes.against - b.votes.against ||
+    b.votes.favor - a.votes.favor ||
+    a.text.localeCompare(b.text)
+  );
 }
 
 function renderScoringRules() {
   if (!state) return;
   const { favor, neutral, against } = state.scoringRules;
   const isCreator = myParticipantId === state.creatorId;
-  const canEdit = isCreator && state.phase === 'adding';
 
   const fmt = v => (v > 0 ? '+' : '') + v;
 
@@ -272,9 +292,9 @@ function renderScoringRules() {
   scoringDisplay.innerHTML = readonlyHtml;
 
   scoringAddingDisplay.innerHTML = readonlyHtml;
-  scoringAddingDisplay.classList.toggle('hidden', canEdit);
+  scoringAddingDisplay.classList.toggle('hidden', isCreator);
 
-  if (canEdit) {
+  if (isCreator) {
     scoringConfig.classList.remove('hidden');
     scoringConfig.innerHTML = `
       <h2>Scoring</h2>
@@ -308,71 +328,23 @@ function sendScoringUpdate() {
   ws.send(JSON.stringify({ type: 'set-scoring', favor, neutral, against }));
 }
 
-function renderDoneButton() {
-  if (!state) return;
-  const amDone = state.doneParticipants.includes(myParticipantId);
-  [doneAddingBtn, doneVotingBtn].forEach(btn => {
-    btn.textContent = amDone ? 'Undo Done' : "I'm Done";
-    btn.classList.toggle('active', amDone);
-  });
-}
-
-function refreshReadyCount() {
-  const connected = Object.entries(state.participants)
-    .filter(([, p]) => p.connected)
-    .map(([id]) => id);
-  const doneCount = connected.filter(id => state.doneParticipants.includes(id)).length;
-  renderReadyCount(doneCount, connected.length);
-}
-
-function renderReadyCount(doneCount, total) {
-  if (!state) return;
-  const inPhase = state.phase === 'adding' || state.phase === 'voting';
-  const text = inPhase && total > 0 ? `${doneCount}/${total} ready` : '';
-  addingReadyCount.textContent = text;
-  votingReadyCount.textContent = text;
-}
-
 function renderParticipants() {
   if (!state) return;
-  const inActivePhase = state.phase === 'adding' || state.phase === 'voting';
   const entries = Object.entries(state.participants);
   participantsList.innerHTML = entries.map(([id, p]) => {
     const isMe = id === myParticipantId;
     const isCreator = id === state.creatorId;
-    const isDone = inActivePhase && state.doneParticipants.includes(id);
+    const isDone = state.doneParticipants.includes(id);
     const statusClass = !p.connected ? 'offline' : isDone ? 'ready' : 'online';
-    const title = !p.connected ? 'Offline' : isDone ? 'Ready' : 'Online';
+    const title = !p.connected ? 'Offline' : isDone ? 'On Results' : 'Online';
     return `<span class="participant-chip ${statusClass}" title="${title}">
       ${escHtml(p.name)}${isMe ? ' (you)' : ''}${isCreator ? ' &#9733;' : ''}
     </span>`;
   }).join('');
 }
 
-function renderPhase() {
-  if (!state) return;
-  const phases = { adding: 'Adding Items', voting: 'Voting', results: 'Results' };
-  phaseIndicator.textContent = `Phase: ${phases[state.phase] || state.phase}`;
-
-  phaseAdding.classList.toggle('hidden', state.phase !== 'adding');
-  phaseVoting.classList.toggle('hidden', state.phase !== 'voting');
-  phaseResults.classList.toggle('hidden', state.phase !== 'results');
-
-  const isCreator = myParticipantId === state.creatorId;
-  startVotingBtn.classList.toggle('hidden', !isCreator || state.phase !== 'adding');
-  backToAddingBtn.classList.toggle('hidden', !isCreator || state.phase !== 'voting');
-  showResultsBtn.classList.toggle('hidden', !isCreator || state.phase !== 'voting');
-  backToVotingBtn.classList.toggle('hidden', !isCreator || state.phase !== 'results');
-
-  if (state.phase === 'voting') renderVoting();
-  if (state.phase === 'results' && state.results) renderResults(state.results);
-}
-
 function renderItems() {
   if (!state) return;
-  const hasItems = state.items.length > 0;
-  doneAddingBtn.disabled = !hasItems;
-  startVotingBtn.disabled = !hasItems;
 
   itemsList.innerHTML = state.items.map(item => {
     const canRemove = item.addedBy === myParticipantId || myParticipantId === state.creatorId;
@@ -454,30 +426,6 @@ function showItemError(msg) {
   itemError.textContent = msg;
   itemError.classList.remove('hidden');
 }
-
-doneAddingBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'mark-done' }));
-});
-
-doneVotingBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'mark-done' }));
-});
-
-startVotingBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'start-voting' }));
-});
-
-backToAddingBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'prev-phase' }));
-});
-
-backToVotingBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'prev-phase' }));
-});
-
-showResultsBtn.addEventListener('click', () => {
-  ws.send(JSON.stringify({ type: 'show-results' }));
-});
 
 qrBtn.addEventListener('click', async () => {
   if (!qrImage.innerHTML) {

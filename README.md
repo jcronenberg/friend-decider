@@ -7,10 +7,9 @@ A lightweight real-time collaborative voting app. Friends join a shared session,
 ## Features
 
 - Real-time updates via WebSockets
-- Two-phase flow: adding items → voting → results
-- Scoring: In Favor (+2), Neutral (0), Against (−5)
-- Auto-advances when all connected participants mark themselves done
-- Host can override and advance at any time
+- Three views: Items, Voting, Results — navigate freely with tabs or Back/Next buttons
+- Results are computed live and update in real-time as votes or items change
+- Scoring: In Favor (+2), Neutral (0), Against (−5) — customisable by the session creator
 - Sessions auto-expire 5 minutes after everyone disconnects
 
 ## Running with Docker or Podman (recommended)
@@ -46,8 +45,7 @@ CREATION_PASSWORD=yourpassword node server/index.js
 
 1. Open the app and enter your name (and creation password if configured) to create a session
 2. Share the session URL with your friends
-3. Everyone adds items they want to vote on
-4. Click **I'm Done** when finished adding — once all connected participants are done, voting starts automatically (or the host can advance manually)
-5. Vote **In Favor**, **Neutral**, or **Against** on each item
-6. Click **I'm Done** when finished voting — results are shown once everyone is done
-7. Results are ranked by score with vote breakdowns
+3. Use the **Items** tab to add things to vote on
+4. Switch to **Voting** and vote **In Favor**, **Neutral**, or **Against** on each item
+5. Switch to **Results** at any time to see the live rankings
+6. Each participant navigates independently — no host control required
