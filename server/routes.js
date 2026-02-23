@@ -22,6 +22,10 @@ setInterval(() => {
   }
 }, 30_000);
 
+router.get('/api/config', (req, res) => {
+  res.json({ passwordRequired: CREATION_PASSWORDS.length > 0 });
+});
+
 router.post('/api/sessions', (req, res) => {
   const ip = req.ip;
   const now = Date.now();
@@ -38,7 +42,7 @@ router.post('/api/sessions', (req, res) => {
 
   const { password, creatorName } = req.body;
 
-  if (!CREATION_PASSWORDS.includes(password)) {
+  if (CREATION_PASSWORDS.length > 0 && !CREATION_PASSWORDS.includes(password)) {
     warn(`Session creation rejected - bad password (creator: "${creatorName}")`);
     return res.status(401).json({ error: 'Invalid password' });
   }

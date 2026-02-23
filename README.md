@@ -37,13 +37,13 @@ CREATION_PASSWORD=yourpassword node server/index.js
 
 | Environment variable | Required | Description |
 |---|---|---|
-| `CREATION_PASSWORD` | Yes | Comma-separated list of passwords that allow session creation (e.g. `alice123,bob456`). Min 8 characters per password recommended. The server refuses to start if unset. |
+| `CREATION_PASSWORD` | No | Comma-separated list of passwords that allow session creation (e.g. `alice123,bob456`). Min 8 characters per password recommended. If unset, session creation is open to anyone. |
 | `PORT` | No | Port to listen on. Defaults to `3000`. |
 | `HOST` | No | Address to bind to. Defaults to `::` (all interfaces, IPv4+IPv6). Set to `::1` for IPv6 localhost or `127.0.0.1` for IPv4 localhost only. |
 
 ## Usage
 
-1. Open the app and enter your name and the creation password to create a session
+1. Open the app and enter your name (and creation password if configured) to create a session
 2. Share the session URL with your friends
 3. Everyone adds items they want to vote on
 4. Click **I'm Done** when finished adding — once all connected participants are done, voting starts automatically (or the host can advance manually)

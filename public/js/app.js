@@ -49,17 +49,31 @@ renderRecentSessions();
 const form = document.getElementById('create-form');
 const errorMsg = document.getElementById('error-msg');
 const submitBtn = document.getElementById('submit-btn');
+const passwordGroup = document.getElementById('password-group');
+const passwordInput = document.getElementById('password');
 
 // Pre-fill name from localStorage if available
 const savedName = localStorage.getItem('friendDeciderName');
 if (savedName) document.getElementById('name').value = savedName;
+
+let passwordRequired = false;
+fetch('/api/config')
+  .then(r => r.json())
+  .then(cfg => {
+    passwordRequired = cfg.passwordRequired;
+    if (passwordRequired) {
+      passwordGroup.classList.remove('hidden');
+      passwordInput.required = true;
+    }
+  })
+  .catch(() => {});
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
   errorMsg.classList.add('hidden');
 
   const name = document.getElementById('name').value.trim();
-  const password = document.getElementById('password').value;
+  const password = passwordRequired ? passwordInput.value : undefined;
 
   if (!name) return showError('Please enter your name');
 
@@ -70,7 +84,7 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, creatorName: name }),
+      body: JSON.stringify({ ...(password !== undefined && { password }), creatorName: name }),
     });
 
     const data = await res.json();

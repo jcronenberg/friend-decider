@@ -35,16 +35,14 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 if (CREATION_PASSWORDS.length === 0) {
-  console.error('ERROR: CREATION_PASSWORD environment variable is not set. Refusing to start.');
-  process.exit(1);
+  console.warn('WARNING: CREATION_PASSWORD is not set. Session creation is open to anyone.');
+} else {
+  const shortPasswords = CREATION_PASSWORDS.filter(p => p.length < 8);
+  if (shortPasswords.length > 0) {
+    console.warn(`WARNING: ${shortPasswords.length} password(s) are less than 8 characters. Consider using stronger passwords.`);
+  }
+  info(`Loaded ${CREATION_PASSWORDS.length} creation password(s)`);
 }
-
-const shortPasswords = CREATION_PASSWORDS.filter(p => p.length < 8);
-if (shortPasswords.length > 0) {
-  console.warn(`WARNING: ${shortPasswords.length} password(s) are less than 8 characters. Consider using stronger passwords.`);
-}
-
-info(`Loaded ${CREATION_PASSWORDS.length} creation password(s)`);
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '::';
