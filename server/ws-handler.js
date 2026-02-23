@@ -100,6 +100,10 @@ export function handleConnection(ws, sessionId) {
           return send(ws, { type: 'error', message: 'Item text required' });
         }
 
+        if (session.items.size >= 100) {
+          return send(ws, { type: 'error', message: 'Item limit of 100 reached' });
+        }
+
         const normalized = text.trim().toLowerCase();
         const duplicate = [...session.items.values()].some(i => i.text.toLowerCase() === normalized);
         if (duplicate) return send(ws, { type: 'error', message: 'An item with that name already exists' });

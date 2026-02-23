@@ -200,7 +200,7 @@ function handleMessage(msg) {
     case 'error': {
       if (msg.message === 'Session not found') {
         showInvalidSession();
-      } else if (msg.message === 'An item with that name already exists') {
+      } else if (msg.message === 'An item with that name already exists' || msg.message === 'Item limit of 100 reached') {
         showItemError(msg.message);
       } else {
         console.error('Server error:', msg.message);
