@@ -4,7 +4,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      CREATION_PASSWORD: changeme
+      # CREATION_PASSWORD: changeme
+      # MAX_SESSIONS_PER_IP: 5
       # PORT: 3000
       # HOST: "::"
     restart: unless-stopped
