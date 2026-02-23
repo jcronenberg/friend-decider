@@ -153,6 +153,7 @@ function handleMessage(msg) {
         state.items.push(msg.item);
         itemError.classList.add('hidden');
         renderItems();
+        if (currentView === 'voting') renderVoting();
         if (currentView === 'results') renderResults(computeResults());
       }
       break;
@@ -161,6 +162,7 @@ function handleMessage(msg) {
       if (state) {
         state.items = state.items.filter(i => i.id !== msg.itemId);
         renderItems();
+        if (currentView === 'voting') renderVoting();
         if (currentView === 'results') renderResults(computeResults());
       }
       break;
