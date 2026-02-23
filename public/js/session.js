@@ -22,6 +22,7 @@ const qrImage = document.getElementById('qr-image');
 const qrCloseBtn = document.getElementById('qr-close-btn');
 const connectionDot = document.getElementById('connection-status');
 const phaseIndicator = document.getElementById('phase-indicator');
+const sessionNameDisplay = document.getElementById('session-name-display');
 const participantsList = document.getElementById('participants-list');
 
 const phaseAdding = document.getElementById('phase-adding');
@@ -128,7 +129,7 @@ function handleMessage(msg) {
       myParticipantId = msg.participantId;
       localStorage.setItem(participantKey, myParticipantId);
       state = msg.state;
-      saveRecentSession(sessionId, myName);
+      saveRecentSession(sessionId, myName, state.name);
       renderAll();
       break;
     }
@@ -235,7 +236,15 @@ function handleMessage(msg) {
 
 // --- Rendering ---
 
+function renderSessionName() {
+  if (!state || !state.name) return;
+  sessionNameDisplay.textContent = state.name;
+  sessionNameDisplay.classList.remove('hidden');
+  document.title = `${state.name} - Friend Decider`;
+}
+
 function renderAll() {
+  renderSessionName();
   renderParticipants();
   renderPhase();
   renderItems();
@@ -506,12 +515,12 @@ function showInvalidSession() {
 
 // --- Recent sessions ---
 
-function saveRecentSession(id, name) {
+function saveRecentSession(id, name, sessionName) {
   const key = 'recentSessions';
   let list = JSON.parse(localStorage.getItem(key) || '[]');
   // Remove existing entry for this session then prepend fresh one
   list = list.filter(s => s.id !== id);
-  list.unshift({ id, name, ts: Date.now() });
+  list.unshift({ id, name, sessionName, ts: Date.now() });
   localStorage.setItem(key, JSON.stringify(list.slice(0, 5)));
 }
 
@@ -528,6 +537,13 @@ function escHtml(str) {
   if (!res.ok) {
     showInvalidSession();
     return;
+  }
+
+  const sessionData = await res.json();
+  if (sessionData.name) {
+    const el = document.getElementById('join-session-name');
+    el.textContent = sessionData.name;
+    el.classList.remove('hidden');
   }
 
   if (myParticipantId && myName) {

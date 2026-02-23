@@ -11,8 +11,9 @@ export class Item {
 }
 
 export class Session {
-  constructor(id, creatorId, creatorName) {
+  constructor(id, creatorId, creatorName, sessionName) {
     this.id = id;
+    this.name = sessionName;
     this.phase = 'adding'; // 'adding'|'voting'|'results'
     this.items = new Map(); // itemId -> Item
     this.participants = new Map(); // participantId -> { name, connected }
@@ -26,6 +27,7 @@ export class Session {
   toJSON() {
     return {
       id: this.id,
+      name: this.name,
       phase: this.phase,
       creatorId: this.creatorId,
       participants: Object.fromEntries(
@@ -46,9 +48,9 @@ export class Session {
 
 const sessions = new Map();
 
-export function createSession(creatorId, creatorName, creatorIp) {
+export function createSession(creatorId, creatorName, creatorIp, sessionName) {
   const id = randomUUID();
-  const session = new Session(id, creatorId, creatorName);
+  const session = new Session(id, creatorId, creatorName, sessionName);
   session.creatorIp = creatorIp || null;
   session.participants.set(creatorId, { name: creatorName, connected: false });
   sessions.set(id, session);

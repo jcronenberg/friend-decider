@@ -154,6 +154,14 @@ input:focus { border-color: var(--color-primary); }
   border: 1px solid rgba(239,68,68,0.3);
 }
 
+/* Session name */
+.session-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
 /* Phase indicator */
 .phase-indicator {
   font-size: 0.85rem;

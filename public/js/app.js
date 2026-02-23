@@ -11,8 +11,8 @@ async function renderRecentSessions() {
     const ago = timeAgo(s.ts);
     return `<li class="recent-item" id="recent-${s.id}">
       <a href="/session/${s.id}" class="recent-link">
-        <span class="recent-name">Joined as ${escHtml(s.name)}</span>
-        <span class="recent-meta">${ago}</span>
+        <span class="recent-name">${escHtml(s.sessionName || s.id)}</span>
+        <span class="recent-meta">as ${escHtml(s.name)} &middot; ${ago}</span>
       </a>
     </li>`;
   }).join('');
@@ -72,9 +72,11 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   errorMsg.classList.add('hidden');
 
+  const sessionName = document.getElementById('session-name').value.trim();
   const name = document.getElementById('name').value.trim();
   const password = passwordRequired ? passwordInput.value : undefined;
 
+  if (!sessionName) return showError('Please enter what you are deciding');
   if (!name) return showError('Please enter your name');
 
   submitBtn.disabled = true;
@@ -84,7 +86,7 @@ form.addEventListener('submit', async e => {
     const res = await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(password !== undefined && { password }), creatorName: name }),
+      body: JSON.stringify({ ...(password !== undefined && { password }), creatorName: name, sessionName }),
     });
 
     const data = await res.json();

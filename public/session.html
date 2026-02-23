@@ -32,6 +32,7 @@
   <div id="name-modal" class="modal hidden">
     <div class="modal-content card">
       <h2>Join Session</h2>
+      <p id="join-session-name" class="session-name hidden"></p>
       <div class="form-group">
         <label for="participant-name">Your Name</label>
         <input type="text" id="participant-name" placeholder="Enter your name" required autocomplete="off">
@@ -52,6 +53,7 @@
             <span id="connection-status" class="status-dot disconnected" title="Disconnected"></span>
           </div>
         </div>
+        <div id="session-name-display" class="session-name hidden"></div>
         <div id="phase-indicator" class="phase-indicator"></div>
         <div id="participants-list" class="participants-list"></div>
       </header>
