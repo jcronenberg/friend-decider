@@ -507,7 +507,7 @@ qrModal.addEventListener('click', e => { if (e.target === qrModal) qrModal.class
 copyLinkBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(location.href).then(() => {
     copyLinkBtn.textContent = 'Copied!';
-    setTimeout(() => { copyLinkBtn.textContent = 'Copy Link'; }, 2000);
+    setTimeout(() => { copyLinkBtn.textContent = 'Copy Share Link'; }, 2000);
   });
 });
 
