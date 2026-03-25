@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friend Decider - Create Session</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="/" class="home-link">Friend Decider</a></h1>
+    </header>
+    <main>
+      <div id="invalid-template" class="card error-screen hidden">
+        <h2>Invalid Link</h2>
+        <p>This template link is missing a session name.</p>
+        <a href="/" class="btn btn-primary">Go Home</a>
+      </div>
+
+      <div id="create-card" class="card hidden">
+        <h2>New Session</h2>
+
+        <form id="create-form">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" placeholder="Enter your name" required autocomplete="off">
+          </div>
+          <div class="form-group hidden" id="password-group">
+            <label for="password">Session Password</label>
+            <input type="password" id="password" placeholder="Enter creation password">
+          </div>
+          <div id="error-msg" class="error-msg hidden"></div>
+          <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%">Create &amp; Join</button>
+        </form>
+
+        <label style="margin-bottom:4px;margin-top:20px;display:block">Session</label>
+        <p id="session-preview" class="session-name" style="margin-bottom:16px"></p>
+
+        <div id="items-section" class="hidden">
+          <label style="margin-bottom:8px;display:block">Items</label>
+          <ul id="items-preview" class="items-list" style="margin-top:0;margin-bottom:0"></ul>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/create.js"></script>
+</body>
+</html>

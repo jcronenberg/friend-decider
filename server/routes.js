@@ -84,6 +84,10 @@ router.get('/api/sessions/:id/qr', async (req, res) => {
   res.send(svg);
 });
 
+router.get('/create', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/create.html'));
+});
+
 router.get('/session/:id', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/session.html'));
 });

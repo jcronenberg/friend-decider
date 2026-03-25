@@ -18,6 +18,11 @@ const participantNameInput = document.getElementById('participant-name');
 const joinBtn = document.getElementById('join-btn');
 const nameError = document.getElementById('name-error');
 const copyLinkBtn = document.getElementById('copy-link-btn');
+const copyTemplateLinkBtn = document.getElementById('copy-template-btn');
+const templateModal = document.getElementById('template-modal');
+const templateUrl = document.getElementById('template-url');
+const templateCopyBtn = document.getElementById('template-copy-btn');
+const templateCloseBtn = document.getElementById('template-close-btn');
 const qrBtn = document.getElementById('qr-btn');
 const qrModal = document.getElementById('qr-modal');
 const qrImage = document.getElementById('qr-image');
@@ -131,6 +136,7 @@ function handleMessage(msg) {
       state = msg.state;
       saveRecentSession(sessionId, myName, state.name);
       renderAll();
+      prefillItemsFromUrl();
       break;
     }
     case 'participant-joined': {
@@ -504,6 +510,40 @@ copyLinkBtn.addEventListener('click', () => {
     setTimeout(() => { copyLinkBtn.textContent = 'Copy Link'; }, 2000);
   });
 });
+
+copyTemplateLinkBtn.addEventListener('click', () => {
+  const url = new URL('/create', location.href);
+  url.searchParams.set('session', state.name);
+  if (state.items.length > 0) {
+    url.searchParams.set('items', state.items.map(i => encodeURIComponent(i.text)).join(','));
+  }
+  templateUrl.textContent = url.toString();
+  templateCopyBtn.textContent = 'Copy';
+  templateModal.classList.remove('hidden');
+});
+
+templateCopyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(templateUrl.textContent).then(() => {
+    templateCopyBtn.textContent = 'Copied!';
+    setTimeout(() => { templateCopyBtn.textContent = 'Copy'; }, 2000);
+  });
+});
+
+templateCloseBtn.addEventListener('click', () => templateModal.classList.add('hidden'));
+templateModal.addEventListener('click', e => { if (e.target === templateModal) templateModal.classList.add('hidden'); });
+
+let prefillDone = false;
+function prefillItemsFromUrl() {
+  if (prefillDone || myParticipantId !== state.creatorId) return;
+  prefillDone = true;
+  const rawItems = new URLSearchParams(location.search).get('items');
+  if (!rawItems) return;
+  history.replaceState(null, '', location.pathname);
+  rawItems.split(',').forEach(encoded => {
+    const text = decodeURIComponent(encoded).trim();
+    if (text) ws.send(JSON.stringify({ type: 'add-item', text }));
+  });
+}
 
 function sendRemoveItem(itemId) {
   ws.send(JSON.stringify({ type: 'remove-item', itemId }));

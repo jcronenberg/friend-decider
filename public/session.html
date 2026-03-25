@@ -19,6 +19,19 @@
     </div>
   </div>
 
+  <!-- Template link modal -->
+  <div id="template-modal" class="modal hidden">
+    <div class="modal-content card">
+      <h2>Template Link</h2>
+      <p style="color:var(--color-text-muted);font-size:0.875rem;margin-bottom:16px">Use this link to recreate this session with the same description and items in the future.</p>
+      <code id="template-url" style="display:block;word-break:break-all;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:0.8rem;margin-bottom:12px"></code>
+      <div style="display:flex;gap:8px">
+        <button id="template-copy-btn" class="btn btn-primary" style="flex:1">Copy</button>
+        <button id="template-close-btn" class="btn btn-secondary" style="flex:1">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- QR Code modal -->
   <div id="qr-modal" class="modal hidden" id="qr-modal">
     <div class="modal-content card qr-card">
@@ -61,6 +74,7 @@
           <div class="header-actions">
             <button id="qr-btn" class="btn btn-secondary">QR Code</button>
             <button id="copy-link-btn" class="btn btn-secondary">Copy Link</button>
+            <button id="copy-template-btn" class="btn btn-secondary">Template Link</button>
             <span id="connection-status" class="status-dot disconnected" title="Disconnected"></span>
           </div>
         </div>
