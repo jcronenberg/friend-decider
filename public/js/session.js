@@ -137,6 +137,7 @@ function handleMessage(msg) {
       saveRecentSession(sessionId, myName, state.name);
       renderAll();
       prefillItemsFromUrl();
+      updateSessionUrl();
       break;
     }
     case 'participant-joined': {
@@ -161,6 +162,7 @@ function handleMessage(msg) {
         renderItems();
         if (currentView === 'voting') renderVoting();
         if (currentView === 'results') renderResults(computeResults());
+        updateSessionUrl();
       }
       break;
     }
@@ -170,6 +172,7 @@ function handleMessage(msg) {
         renderItems();
         if (currentView === 'voting') renderVoting();
         if (currentView === 'results') renderResults(computeResults());
+        updateSessionUrl();
       }
       break;
     }
@@ -189,6 +192,7 @@ function handleMessage(msg) {
         state.scoringRules = msg.scoringRules;
         renderScoringRules();
         if (currentView === 'results') renderResults(computeResults());
+        updateSessionUrl();
       }
       break;
     }
@@ -505,7 +509,7 @@ qrCloseBtn.addEventListener('click', () => qrModal.classList.add('hidden'));
 qrModal.addEventListener('click', e => { if (e.target === qrModal) qrModal.classList.add('hidden'); });
 
 copyLinkBtn.addEventListener('click', () => {
-  navigator.clipboard.writeText(location.href).then(() => {
+  navigator.clipboard.writeText(location.origin + location.pathname).then(() => {
     copyLinkBtn.textContent = 'Copied!';
     setTimeout(() => { copyLinkBtn.textContent = 'Copy Share Link'; }, 2000);
   });
@@ -570,9 +574,39 @@ function sendVote(itemId, vote) {
 function showInvalidSession() {
   clearTimeout(reconnectTimer);
   if (ws) ws.onclose = null; // prevent reconnect loop
+
+  const p = new URLSearchParams(location.search);
+  const recoverySession = p.get('_session');
+  if (recoverySession) {
+    const dest = new URL('/create', location.href);
+    dest.searchParams.set('session', recoverySession);
+    const items = p.get('_items');
+    if (items) dest.searchParams.set('items', items);
+    for (const key of ['favor', 'neutral', 'against']) {
+      const val = p.get(`_${key}`);
+      if (val !== null) dest.searchParams.set(key, val);
+    }
+    window.location.href = dest.toString();
+    return;
+  }
+
   nameModal.classList.add('hidden');
   app.classList.add('hidden');
   invalidScreen.classList.remove('hidden');
+}
+
+function updateSessionUrl() {
+  if (!state) return;
+  const p = new URLSearchParams();
+  p.set('_session', state.name);
+  if (state.items.length > 0) {
+    p.set('_items', state.items.map(i => encodeURIComponent(i.text)).join(','));
+  }
+  const { favor, neutral, against } = state.scoringRules;
+  p.set('_favor', favor);
+  p.set('_neutral', neutral);
+  p.set('_against', against);
+  history.replaceState(null, '', `${location.pathname}?${p.toString()}`);
 }
 
 // --- Recent sessions ---
