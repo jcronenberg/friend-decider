@@ -517,6 +517,12 @@ copyTemplateLinkBtn.addEventListener('click', () => {
   if (state.items.length > 0) {
     url.searchParams.set('items', state.items.map(i => encodeURIComponent(i.text)).join(','));
   }
+  const { favor, neutral, against } = state.scoringRules;
+  if (favor !== 2 || neutral !== 0 || against !== -5) {
+    url.searchParams.set('favor', favor);
+    url.searchParams.set('neutral', neutral);
+    url.searchParams.set('against', against);
+  }
   templateUrl.textContent = url.toString();
   templateCopyBtn.textContent = 'Copy';
   templateModal.classList.remove('hidden');
@@ -536,13 +542,21 @@ let prefillDone = false;
 function prefillItemsFromUrl() {
   if (prefillDone || myParticipantId !== state.creatorId) return;
   prefillDone = true;
-  const rawItems = new URLSearchParams(location.search).get('items');
-  if (!rawItems) return;
+  const p = new URLSearchParams(location.search);
   history.replaceState(null, '', location.pathname);
-  rawItems.split(',').forEach(encoded => {
-    const text = decodeURIComponent(encoded).trim();
-    if (text) ws.send(JSON.stringify({ type: 'add-item', text }));
-  });
+  const rawItems = p.get('items');
+  if (rawItems) {
+    rawItems.split(',').forEach(encoded => {
+      const text = decodeURIComponent(encoded).trim();
+      if (text) ws.send(JSON.stringify({ type: 'add-item', text }));
+    });
+  }
+  const favor = parseInt(p.get('favor'), 10);
+  const neutral = parseInt(p.get('neutral'), 10);
+  const against = parseInt(p.get('against'), 10);
+  if (!isNaN(favor) && !isNaN(neutral) && !isNaN(against)) {
+    ws.send(JSON.stringify({ type: 'set-scoring', favor, neutral, against }));
+  }
 }
 
 function sendRemoveItem(itemId) {

@@ -73,10 +73,13 @@ if (!preSession || !preSession.trim()) {
 
       localStorage.setItem('friendDeciderName', name);
       localStorage.setItem(`participant:${data.sessionId}`, data.participantId);
-      const dest = preItems
-        ? `/session/${data.sessionId}?items=${encodeURIComponent(preItems)}`
-        : `/session/${data.sessionId}`;
-      window.location.href = dest;
+      const dest = new URL(`/session/${data.sessionId}`, location.href);
+      if (preItems) dest.searchParams.set('items', preItems);
+      for (const key of ['favor', 'neutral', 'against']) {
+        const val = params.get(key);
+        if (val !== null) dest.searchParams.set(key, val);
+      }
+      window.location.href = dest.toString();
     } catch {
       showError('Network error. Please try again.');
     } finally {
