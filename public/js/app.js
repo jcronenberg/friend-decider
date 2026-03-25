@@ -1,3 +1,36 @@
+// --- Recent templates ---
+const recentTemplatesCard = document.getElementById('recent-templates');
+const templateList = document.getElementById('template-list');
+
+function renderRecentTemplates() {
+  const list = JSON.parse(localStorage.getItem('recentTemplates') || '[]');
+  if (list.length === 0) return;
+
+  templateList.innerHTML = list.map(t => {
+    const url = new URL('/create', location.href);
+    url.searchParams.set('session', t.sessionName);
+    if (t.items.length > 0) {
+      url.searchParams.set('items', t.items.map(i => encodeURIComponent(i)).join(','));
+    }
+    const { favor, neutral, against } = t.scoring;
+    if (favor !== 2 || neutral !== 0 || against !== -5) {
+      url.searchParams.set('favor', favor);
+      url.searchParams.set('neutral', neutral);
+      url.searchParams.set('against', against);
+    }
+    const itemCount = t.items.length === 1 ? '1 item' : `${t.items.length} items`;
+    return `<li class="recent-item">
+      <a href="${url.toString()}" class="recent-link">
+        <span class="recent-name">${escHtml(t.sessionName)}</span>
+        <span class="recent-meta">${itemCount} &middot; ${timeAgo(t.ts)}</span>
+      </a>
+    </li>`;
+  }).join('');
+  recentTemplatesCard.classList.remove('hidden');
+}
+
+renderRecentTemplates();
+
 // --- Recent sessions ---
 const recentCard = document.getElementById('recent-sessions');
 const recentList = document.getElementById('recent-list');

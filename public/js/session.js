@@ -162,6 +162,7 @@ function handleMessage(msg) {
         renderItems();
         if (currentView === 'voting') renderVoting();
         if (currentView === 'results') renderResults(computeResults());
+        if (prefillPending > 0) prefillPending--;
         updateSessionUrl();
       }
       break;
@@ -543,6 +544,7 @@ templateCloseBtn.addEventListener('click', () => templateModal.classList.add('hi
 templateModal.addEventListener('click', e => { if (e.target === templateModal) templateModal.classList.add('hidden'); });
 
 let prefillDone = false;
+let prefillPending = 0;
 function prefillItemsFromUrl() {
   if (prefillDone || myParticipantId !== state.creatorId) return;
   prefillDone = true;
@@ -550,10 +552,9 @@ function prefillItemsFromUrl() {
   history.replaceState(null, '', location.pathname);
   const rawItems = p.get('items');
   if (rawItems) {
-    rawItems.split(',').forEach(encoded => {
-      const text = decodeURIComponent(encoded).trim();
-      if (text) ws.send(JSON.stringify({ type: 'add-item', text }));
-    });
+    const items = rawItems.split(',').map(e => decodeURIComponent(e).trim()).filter(Boolean);
+    prefillPending = items.length;
+    items.forEach(text => ws.send(JSON.stringify({ type: 'add-item', text })));
   }
   const favor = parseInt(p.get('favor'), 10);
   const neutral = parseInt(p.get('neutral'), 10);
@@ -607,6 +608,27 @@ function updateSessionUrl() {
   p.set('_neutral', neutral);
   p.set('_against', against);
   history.replaceState(null, '', `${location.pathname}?${p.toString()}`);
+  saveSessionTemplate();
+}
+
+function saveSessionTemplate() {
+  if (!state || prefillPending > 0) return;
+  const key = 'recentTemplates';
+  const items = state.items.map(i => i.text);
+  const scoring = state.scoringRules;
+  const list = JSON.parse(localStorage.getItem(key) || '[]');
+  const identical = list.some(t =>
+    t.sessionName === state.name &&
+    t.items.length === items.length &&
+    t.items.every((text, i) => text === items[i]) &&
+    t.scoring.favor === scoring.favor &&
+    t.scoring.neutral === scoring.neutral &&
+    t.scoring.against === scoring.against
+  );
+  if (identical) return;
+  const filtered = list.filter(t => t.sessionId !== sessionId);
+  filtered.unshift({ sessionId, sessionName: state.name, items, scoring: { ...scoring }, ts: Date.now() });
+  localStorage.setItem(key, JSON.stringify(filtered.slice(0, 5)));
 }
 
 // --- Recent sessions ---
