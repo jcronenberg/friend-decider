@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { info } from './log.js';
+import { MAX_TOTAL_SESSIONS } from './config.js';
 
 export class Item {
   constructor(id, text, addedBy) {
@@ -20,7 +21,6 @@ export class Session {
     this.scoringRules = { favor: 2, neutral: 0, against: -5 };
     this.lockNavigation = false;
     this.doneParticipants = new Set(); // participantIds currently viewing results
-    this.allDisconnectedAt = null;
     this.createdAt = Date.now();
   }
 
@@ -45,9 +45,29 @@ export class Session {
   }
 }
 
+// Map preserves insertion order: oldest entries first, newest last.
+// touchSession() re-inserts a session to move it to the end (most recently active).
 const sessions = new Map();
 
+function evictSessions(count) {
+  const inactive = [];
+  const active = [];
+  for (const [id, session] of sessions) {
+    const hasConnected = [...session.participants.values()].some(p => p.connected);
+    if (hasConnected) active.push(id);
+    else inactive.push(id);
+  }
+  const toEvict = [...inactive, ...active].slice(0, count);
+  for (const id of toEvict) {
+    sessions.delete(id);
+    info(`Session evicted (limit reached): ${id}`);
+  }
+}
+
 export function createSession(creatorId, creatorName, creatorIp, sessionName, lockNavigation = false) {
+  if (sessions.size >= MAX_TOTAL_SESSIONS) {
+    evictSessions(sessions.size - MAX_TOTAL_SESSIONS + 1);
+  }
   const id = randomUUID();
   const session = new Session(id, creatorId, creatorName, sessionName);
   session.creatorIp = creatorIp || null;
@@ -73,17 +93,11 @@ export function deleteSession(id) {
   sessions.delete(id);
 }
 
-// Cleanup: every 30s, remove sessions disconnected for >5 minutes
-const FIVE_MINUTES = 5 * 60 * 1000;
-
-export function startCleanup() {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [id, session] of sessions) {
-      if (session.allDisconnectedAt && now - session.allDisconnectedAt > FIVE_MINUTES) {
-        sessions.delete(id);
-        info(`Session expired and deleted: ${id}`);
-      }
-    }
-  }, 30_000);
+// Move session to the end of the map (most recently active).
+export function touchSession(id) {
+  const session = sessions.get(id);
+  if (!session) return;
+  sessions.delete(id);
+  sessions.set(id, session);
 }
+

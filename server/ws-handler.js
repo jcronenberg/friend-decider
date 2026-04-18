@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { getSession } from './session-store.js';
+import { getSession, touchSession } from './session-store.js';
 import { info, warn } from './log.js';
 
 // connections: sessionId -> Set of { ws, participantId }
@@ -67,8 +67,7 @@ export function handleConnection(ws, sessionId) {
           info(`[${sessionId}] "${name.trim()}" joined (${session.participants.size} participants)`);
         }
 
-        // Clear disconnect timer since someone is now connected
-        session.allDisconnectedAt = null;
+        touchSession(sessionId);
 
         const conn = { ws, participantId };
         getConnections(sessionId).add(conn);
@@ -208,11 +207,6 @@ export function handleConnection(ws, sessionId) {
     }
 
     const conns = getConnections(sessionId);
-    if (conns.size === 0) {
-      session.allDisconnectedAt = Date.now();
-      info(`[${sessionId}] All participants disconnected - session expires in 5 minutes`);
-    }
-
     if (participantId) {
       const name = session.participants.get(participantId)?.name ?? participantId;
       info(`[${sessionId}] "${name}" disconnected (${conns.size} remaining)`);

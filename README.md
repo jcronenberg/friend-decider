@@ -10,7 +10,7 @@ A lightweight real-time collaborative voting app. Friends join a shared session,
 - Three views: Items, Voting, Results — navigate freely with tabs or Back/Next buttons
 - Results are computed live and update in real-time as votes or items change
 - Scoring: In Favor (+2), Neutral (0), Against (−5) — customisable by the session creator
-- Sessions auto-expire 5 minutes after everyone disconnects
+- Sessions persist until the server-wide session limit is reached, at which point the oldest inactive sessions are evicted
 
 ## Running with Docker or Podman (recommended)
 
@@ -38,6 +38,7 @@ CREATION_PASSWORD=yourpassword node server/index.js
 |---|---|---|
 | `CREATION_PASSWORD` | No | Comma-separated list of passwords that allow session creation (e.g. `alice123,bob456`). Min 8 characters per password recommended. If unset, session creation is open to anyone. |
 | `MAX_SESSIONS_PER_IP` | No | Max number of active sessions a single IP can create. Defaults to `5`. Set to `0` to disable the limit. |
+| `MAX_TOTAL_SESSIONS` | No | Max number of sessions stored server-wide. When the limit is reached, the oldest inactive sessions are evicted first. Defaults to `100`. |
 | `PORT` | No | Port to listen on. Defaults to `3000`. |
 | `HOST` | No | Address to bind to. Defaults to `::` (all interfaces, IPv4+IPv6). Set to `::1` for IPv6 localhost or `127.0.0.1` for IPv4 localhost only. |
 

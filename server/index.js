@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import router from './routes.js';
 import { handleConnection } from './ws-handler.js';
-import { startCleanup } from './session-store.js';
 import { info, warn } from './log.js';
 import { CREATION_PASSWORDS } from './config.js';
 
@@ -49,8 +48,6 @@ const HOST = process.env.HOST || '::';
 server.listen(PORT, HOST, () => {
   info(`Friend Decider running on ${HOST}:${PORT}`);
 });
-
-startCleanup();
 
 function shutdown(signal) {
   info(`Received ${signal}, shutting down`);
