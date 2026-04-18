@@ -9,6 +9,7 @@ let myName = localStorage.getItem('friendDeciderName') || '';
 let state = null; // full session state
 let reconnectTimer = null;
 let currentView = localStorage.getItem(viewKey) || 'adding'; // 'adding' | 'voting' | 'results'
+let wasKicked = false;
 
 // DOM refs
 const invalidScreen = document.getElementById('invalid-session');
@@ -53,6 +54,10 @@ const confirmModal = document.getElementById('confirm-modal');
 const confirmMessage = document.getElementById('confirm-message');
 const confirmOkBtn = document.getElementById('confirm-ok-btn');
 const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+const moderationBtn = document.getElementById('moderation-btn');
+const moderationModal = document.getElementById('moderation-modal');
+const moderationList = document.getElementById('moderation-list');
+const moderationCloseBtn = document.getElementById('moderation-close-btn');
 
 // --- Name prompt ---
 
@@ -116,6 +121,7 @@ function connect() {
 }
 
 function scheduleReconnect() {
+  if (wasKicked) return;
   clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => connect(), 2000);
 }
@@ -208,6 +214,37 @@ function handleMessage(msg) {
       }
       break;
     }
+    case 'kicked': {
+      wasKicked = true;
+      clearTimeout(reconnectTimer);
+      document.querySelector('#invalid-session h2').textContent = 'You have been kicked';
+      document.querySelector('#invalid-session p').textContent = 'The session host has removed you from this session.';
+      nameModal.classList.add('hidden');
+      app.classList.add('hidden');
+      invalidScreen.classList.remove('hidden');
+      break;
+    }
+    case 'participant-removed': {
+      if (state) {
+        delete state.participants[msg.participantId];
+        state.doneParticipants = state.doneParticipants.filter(id => id !== msg.participantId);
+        state.items.forEach(item => delete item.votes[msg.participantId]);
+        renderParticipants();
+        renderItems();
+        if (currentView === 'voting') renderVoting();
+        if (currentView === 'results') renderResults(computeResults());
+        if (!moderationModal.classList.contains('hidden')) renderModerationList();
+      }
+      break;
+    }
+    case 'host-transferred': {
+      if (state) {
+        state.creatorId = msg.newCreatorId;
+        renderAll();
+        if (!moderationModal.classList.contains('hidden')) renderModerationList();
+      }
+      break;
+    }
     case 'error': {
       if (msg.message === 'Session not found') {
         showInvalidSession();
@@ -236,6 +273,7 @@ function renderAll() {
   renderItems();
   renderScoringRules();
   renderView();
+  moderationBtn.classList.toggle('hidden', myParticipantId !== state.creatorId);
 }
 
 function renderView() {
@@ -566,6 +604,58 @@ function prefillItemsFromUrl() {
 
 function sendRemoveItem(itemId) {
   ws.send(JSON.stringify({ type: 'remove-item', itemId }));
+}
+
+// --- Moderation ---
+
+moderationBtn.addEventListener('click', () => {
+  renderModerationList();
+  moderationModal.classList.remove('hidden');
+});
+moderationCloseBtn.addEventListener('click', () => moderationModal.classList.add('hidden'));
+moderationModal.addEventListener('click', e => { if (e.target === moderationModal) moderationModal.classList.add('hidden'); });
+
+function renderModerationList() {
+  const entries = Object.entries(state.participants);
+  moderationList.innerHTML = entries.map(([id, p]) => {
+    const isMe = id === myParticipantId;
+    const statusClass = p.connected ? 'online' : 'offline';
+    const statusLabel = p.connected ? 'Online' : 'Offline';
+    return `<li class="moderation-row">
+      <span class="moderation-row-name">
+        <span class="participant-chip ${statusClass}" title="${statusLabel}">${escHtml(p.name)}</span>
+        ${isMe ? '<span class="moderation-you">you &mdash; host</span>' : ''}
+      </span>
+      ${!isMe ? `
+        <button class="btn btn-secondary btn-sm" data-transfer="${escHtml(id)}">Make Host</button>
+        <button class="btn btn-danger btn-sm" data-kick="${escHtml(id)}">Kick</button>
+      ` : ''}
+    </li>`;
+  }).join('') || '<li class="empty-state">No participants.</li>';
+
+  moderationList.querySelectorAll('[data-kick]').forEach(btn => {
+    btn.addEventListener('click', () => handleKick(btn.dataset.kick));
+  });
+  moderationList.querySelectorAll('[data-transfer]').forEach(btn => {
+    btn.addEventListener('click', () => handleTransferHost(btn.dataset.transfer));
+  });
+}
+
+async function handleKick(targetId) {
+  const p = state.participants[targetId];
+  if (!p) return;
+  if (p.connected) {
+    const ok = await showConfirm(`Kick "${p.name}"? They are currently active in the session.`);
+    if (!ok) return;
+  }
+  ws.send(JSON.stringify({ type: 'kick', targetId }));
+}
+
+function handleTransferHost(targetId) {
+  const p = state.participants[targetId];
+  if (!p) return;
+  ws.send(JSON.stringify({ type: 'transfer-host', targetId }));
+  moderationModal.classList.add('hidden');
 }
 
 function sendVote(itemId, vote) {

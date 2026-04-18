@@ -535,6 +535,46 @@ input:focus { border-color: var(--color-primary); }
   margin-bottom: 24px;
 }
 
+/* Moderation modal */
+.moderation-card {
+  max-width: 500px;
+}
+
+.moderation-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.moderation-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.moderation-row-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.moderation-you {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 /* Utility */
 .hidden { display: none !important; }
 

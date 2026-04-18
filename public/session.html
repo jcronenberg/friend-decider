@@ -19,6 +19,15 @@
     </div>
   </div>
 
+  <!-- Moderation modal -->
+  <div id="moderation-modal" class="modal hidden">
+    <div class="modal-content card moderation-card">
+      <h2>Moderation</h2>
+      <ul id="moderation-list" class="moderation-list"></ul>
+      <button id="moderation-close-btn" class="btn btn-secondary" style="width:100%">Close</button>
+    </div>
+  </div>
+
   <!-- Template link modal -->
   <div id="template-modal" class="modal hidden">
     <div class="modal-content card">
@@ -72,6 +81,7 @@
         <div class="header-row">
           <h1><a href="/" class="home-link">Friend Decider</a></h1>
           <div class="header-actions">
+            <button id="moderation-btn" class="btn btn-secondary hidden">Moderation</button>
             <button id="qr-btn" class="btn btn-secondary">Share QR</button>
             <button id="copy-link-btn" class="btn btn-secondary">Copy Share Link</button>
             <button id="copy-template-btn" class="btn btn-secondary">Template Link</button>

@@ -188,6 +188,53 @@ export function handleConnection(ws, sessionId) {
         break;
       }
 
+      case 'kick': {
+        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
+        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only the host can kick participants' });
+
+        const { targetId } = msg;
+        if (!targetId || targetId === participantId) return send(ws, { type: 'error', message: 'Invalid target' });
+        if (!session.participants.has(targetId)) return send(ws, { type: 'error', message: 'Participant not found' });
+
+        const targetName = session.participants.get(targetId).name;
+
+        const conns = getConnections(sessionId);
+        for (const conn of [...conns]) {
+          if (conn.participantId === targetId) {
+            send(conn.ws, { type: 'kicked' });
+            conn.ws.close();
+          }
+        }
+
+        session.participants.delete(targetId);
+        session.doneParticipants.delete(targetId);
+        for (const item of session.items.values()) {
+          item.votes.delete(targetId);
+        }
+
+        info(`[${sessionId}] "${targetName}" kicked by host`);
+        send(ws, { type: 'participant-removed', participantId: targetId });
+        broadcast(sessionId, { type: 'participant-removed', participantId: targetId }, ws);
+        break;
+      }
+
+      case 'transfer-host': {
+        if (!participantId) return send(ws, { type: 'error', message: 'Not joined' });
+        if (participantId !== session.creatorId) return send(ws, { type: 'error', message: 'Only the host can transfer host status' });
+
+        const { targetId } = msg;
+        if (!targetId || targetId === participantId) return send(ws, { type: 'error', message: 'Invalid target' });
+        if (!session.participants.has(targetId)) return send(ws, { type: 'error', message: 'Participant not found' });
+
+        session.creatorId = targetId;
+        const targetName = session.participants.get(targetId).name;
+        info(`[${sessionId}] Host transferred to "${targetName}"`);
+
+        send(ws, { type: 'host-transferred', newCreatorId: targetId });
+        broadcast(sessionId, { type: 'host-transferred', newCreatorId: targetId }, ws);
+        break;
+      }
+
       default:
         warn(`[${sessionId}] Unknown message type: ${msg.type}`);
         send(ws, { type: 'error', message: `Unknown message type: ${msg.type}` });
